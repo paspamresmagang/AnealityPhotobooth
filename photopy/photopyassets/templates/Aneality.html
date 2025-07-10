@@ -1,0 +1,153 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aneality Cam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background-color: rgb(179, 59, 59);
+      color: white;
+    }
+
+    header {
+      text-align: center;
+      font-size: 30px;
+      margin: 15px 0;
+      padding: 20px;
+      color: #f8f3f5;
+    }
+
+    .guide {
+      background-color: rgba(97, 36, 36, 0.9);
+      padding: 20px;
+      border-radius: 15px;
+      margin: 0 auto 30px;
+      max-width: 1200px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .guide h2 {
+      margin-bottom: 19px;
+      text-align: center;
+    }
+
+    .guide ul {
+      list-style: none;
+      padding-left: 0;
+      text-align: justify;
+    }
+
+    .guide li {
+      margin-bottom: 8px;
+    }
+
+    .layout {
+      position: relative;
+      margin: auto;
+      width: 1100px;
+      height: 500px;
+      border: 4px solid white;
+      border-radius: 40px;
+      overflow: hidden;
+    }
+
+    .select-frame h1 {
+      position: absolute;
+      top: 5%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+      background: none;
+    }
+
+    .framelayout {
+      position: relative;
+      margin: auto;
+      top: 28%;
+      width: 900px;
+      height: 310px;
+      opacity: 0.4;
+      border-radius: 15px;
+      display: flex;
+      /* Tambahkan ini */
+      gap: 20px;
+      /* Jarak antara frame */
+      justify-content: center;
+      /* Pusatkan horizontal */
+    }
+
+    .layoutframe img {
+      width: 200px;
+      height: 300px;
+      border-radius: 15px;
+      border: 2px solid #D9D9D9;
+      opacity: 0.8;
+      transition: all 0.3s ease;
+    }
+
+    .layoutframe:hover img {
+      opacity: 1;
+      transform: scale(1.05);
+      border-color: #FF5E8A;
+    }
+  </style>
+</head>
+
+<body>
+  <header>Aneality Photobooth</header>
+
+  <div class="guide" id="guide">
+    <h2>Cara Menggunakan Photo Booth</h2>
+    <ul>
+      <li>1. Klik tombol "Mulai" untuk memulai sesi pengambilan foto.</li>
+      <li>2. Izinkan akses kamera saat diminta untuk menampilkan video.</li>
+      <li>3. Posisikan diri Anda di depan kamera dan tunggu hitungan mundur (3 detik) untuk setiap foto.</li>
+      <li>4. Pilih jumlah foto (3 atau 4) menggunakan tombol di bagian "Pilih Strip Foto".</li>
+      <li>5. Pilih tema strip foto dengan mengklik "Pilih Strip" dan memilih desain yang diinginkan.</li>
+      <li>6. Tambahkan filter pada foto dengan mengklik foto di strip, lalu pilih "Pilih Filter" dan klik filter yang
+        diinginkan.</li>
+      <li>7. Klik "Retry" untuk mengulang pengambilan foto jika diperlukan.</li>
+      <li>8. Klik "Download" untuk menyimpan hasil foto dalam format PNG.</li>
+      <li>9. Gunakan ikon musik di pojok kanan bawah untuk mengontrol musik latar.</li>
+    </ul>
+  </div>
+
+  <div class="layout">
+    <div class="select-frame">
+      <h1>Select layout first</h1>
+    </div>
+
+    <div class="framelayout">
+      <div class="layoutframe" data-count="3">
+        <a href="{% url 'navtocamera' %}?count=3">
+          <img src="{% static 'imageassets/layout3.png' %}" alt="Ke Kamera">
+        </a>
+      </div>
+
+      <div class="layoutframe" data-count="4">
+        <a href="{% url 'navtocamera' %}?count=4">
+          <img src="{% static 'imageassets/layout4.png' %}">
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+
+<script>
+</script>
+
+</html>

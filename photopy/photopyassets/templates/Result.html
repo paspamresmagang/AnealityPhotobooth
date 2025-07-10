@@ -1,0 +1,300 @@
+{% csrf_token %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Hasil Jepretan</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: rgb(179, 59, 59);
+      color: white;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+    }
+
+    h1 {
+      margin-top: 30px;
+      font-size: 2.5rem;
+      color: #f4f4f4;
+    }
+
+    .photostrip {
+      background: #fff;
+      padding: 10px;
+      border-radius: 20px;
+      width: max-content;
+      margin: 30px auto;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      display: grid;
+      gap: 10px;
+    }
+
+    .photostrip img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      border: none;
+    }
+
+    .result-preview {
+      position: relative;
+      margin: 20px auto;
+      overflow: hidden;
+    }
+
+    #frame-layout {
+      position: relative;
+      margin: 30px auto;
+      border: 2px solid #fff;
+      background-color: #333;
+      overflow: hidden;
+    }
+
+
+    #frame-layout img {
+      border-radius: 5px;
+    }
+
+    .carousel {
+      display: flex;
+      overflow-x: auto;
+      gap: 16px;
+      padding: 20px;
+      margin: 30px auto;
+      max-width: 90vw;
+      scroll-behavior: smooth;
+      scrollbar-width: thin;
+      scrollbar-color: #ffc107 transparent;
+    }
+
+    .carousel::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .carousel::-webkit-scrollbar-thumb {
+      background-color: #ffc107;
+      border-radius: 10px;
+    }
+
+    .frame-container {
+      width: 200px;
+      margin: 20px auto;
+      cursor: pointer;
+    }
+
+    .selectable-frame {
+      width: 100%;
+      border-radius: 10px;
+      transition: transform 0.2s;
+    }
+
+    .selectable-frame:hover {
+      transform: scale(1.03);
+    }
+
+    .filter-btn {
+      margin: 5px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 20px;
+      background-color: #ffc107;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .filter-btn:hover {
+      background-color: #ffca2c;
+    }
+
+    .back-btn {
+      margin: 40px auto 20px;
+      padding: 10px 20px;
+      background-color: #00adb5;
+      border: none;
+      border-radius: 25px;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      background-color: #007d83;
+    }
+
+    .back-btn:nth-child(2) {
+      background-color: #ff6f61;
+    }
+
+    .back-btn:nth-child(2):hover {
+      background-color: #cc5c50;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Hasil Jepretanmu 📸</h1>
+
+  {% if request.session.result_photos %}
+  <div class="photostrip" id="photostrip">
+    {% for foto in request.session.result_photos %}
+    <img src="{{ foto }}" alt="Foto {{ forloop.counter }}" data-filename="foto_{{ forloop.counter }}.jpg">
+    {% endfor %}
+  </div>
+  {% else %}
+  <p>Belum ada foto, yuk balik foto-foto dulu!</p>
+  {% endif %}
+
+  <!-- Frame Carousel -->
+  <div id="frame-carousel" class="carousel">
+    <div class="frame-container" onclick="applyFrame('Grid_F4.png')">
+      <img src="{% static 'photos/photo4/Grid_F4.png' %}" alt="Frame Grid" class="selectable-frame">
+    </div>
+    <div class="frame-container" onclick="applyFrame('KateJackson_F4.png')">
+      <img src="{% static 'photos/photo4/KateJackson_F4.png' %}" alt="Frame Vintage" class="selectable-frame">
+    </div>
+  </div>
+
+  <!-- Filter Button -->
+  <div style="margin: 30px auto;">
+    <button class="filter-btn" onclick="applyFilter('blackwhite')">Black & White</button>
+    <button class="filter-btn" onclick="applyFilter('sepia')">Sepia</button>
+    <button class="filter-btn" onclick="applyFilter('vintage')">Vintage</button>
+  </div>
+
+  <!-- Preview Frame -->
+  <div id="result-preview" class="result-preview">
+    <div id="frame-layout" class="frame-layout">
+    </div>
+  </div>
+
+  <!-- Navigasi -->
+  <a href="{% url 'navtocamera' %}">
+    <button class="back-btn"><i class="fas fa-arrow-left"></i> Balik Foto Lagi</button>
+  </a>
+  <a href="{% url 'retake_photos' %}">
+    <button class="back-btn"><i class="fas fa-redo"></i> Retake Foto</button>
+  </a>
+
+  <script>
+    function getBase64(img) {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+      return canvas.toDataURL("image/jpeg");
+    }
+
+    function applyFrame(frameName) {
+      const frameData = {
+        "KateJackson_F4.png": {
+          src: "{% static 'photos/photo4/KateJackson_F4.png' %}",
+          size: { width: 560, height: 1708 },
+          slots: [
+            { top: 35, left: 28, width: 504, height: 328 },
+            { top: 442, left: 28, width: 504, height: 328 },
+            { top: 849, left: 28, width: 504, height: 328 },
+            { top: 1256, left: 28, width: 504, height: 328 }
+          ]
+        },
+        "Grid_F4.png": {
+          src: "{% static 'photos/photo4/Grid_F4.png' %}",
+          size: { width: 260, height: 760 },
+          slots: [
+            { top: 25, left: 12, width: 236, height: 160 },
+            { top: 200, left: 12, width: 236, height: 160 },
+            { top: 375, left: 12, width: 236, height: 160 },
+            { top: 550, left: 12, width: 236, height: 160 }
+          ]
+        }
+      };
+
+      const frame = frameData[frameName];
+      const container = document.getElementById('frame-layout');
+      container.style.width = frame.size.width + "px";
+      container.style.height = frame.size.height + "px";
+      container.innerHTML = '';
+
+      // Tambahkan frame image
+      const frameImg = document.createElement('img');
+      frameImg.src = frame.src;
+      frameImg.style.position = 'absolute';
+      frameImg.style.top = 0;
+      frameImg.style.left = 0;
+      frameImg.style.width = '100%';
+      frameImg.style.height = '100%';
+      container.appendChild(frameImg);
+
+      // ini buat masking ke frame
+      const fotoEls = document.querySelectorAll('#photostrip img');
+      for (let i = 0; i < Math.min(fotoEls.length, frame.slots.length); i++) {
+        const slot = frame.slots[i];
+        const foto = document.createElement('img');
+        foto.src = fotoEls[i].src;
+        Object.assign(foto.style, {
+          position: 'absolute',
+          top: slot.top + 'px',
+          left: slot.left + 'px',
+          width: slot.width + 'px',
+          height: slot.height + 'px',
+          objectFit: 'cover'
+        });
+        container.appendChild(foto);
+      }
+    }
+
+    async function applyFilter(filterType) {
+      const images = [];
+      const photostrip = document.getElementById('photostrip');
+      const imgElements = photostrip.querySelectorAll('img');
+
+      imgElements.forEach(img => {
+        images.push({
+          image: getBase64(img),
+          filename: img.getAttribute('data-filename')
+        });
+      });
+
+      try {
+        const response = await fetch("{% url 'apply_mass_filter' %}", {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token }}'
+          },
+          body: JSON.stringify({ filter: filterType, images: images })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          photostrip.innerHTML = '';
+          data.images.forEach(item => {
+            const newImg = document.createElement('img');
+            newImg.src = item.image;
+            newImg.alt = item.filename;
+            newImg.setAttribute('data-filename', item.filename);
+            photostrip.appendChild(newImg);
+          });
+        } else {
+          alert("Gagal ngefilter: " + data.error);
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert("Error saat apply filter!");
+      }
+    }
+  </script>
+</body>
+
+</html>
