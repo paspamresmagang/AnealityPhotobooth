@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aneality Cam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-red: rgb(179, 59, 59);
+      --text-color: white;
+
+      --font-body: 'Poppins', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-red);
+      color: var(--text-color);
+    }
+
+    header {
+      text-align: center;
+      font-size: 32px;
+      margin: 20px 0;
+      padding: 15px;
+      color: #ffe9ec;
+      font-weight: 700;
+    }
+
+    .layout {
+      position: relative;
+      margin: 0 auto;
+      width: 1100px;
+      height: 500px;
+      border: 4px solid white;
+      border-radius: 40px;
+      overflow: hidden;
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .video-container {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      aspect-ratio: 4 / 3;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      background: black;
+    }
+
+    .countdown {
+      position: absolute;
+      font-size: 80px;
+      color: #ffffff;
+      display: none;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-shadow: 0 0 15px #FFF;
+      font-weight: 700;
+      z-index: 3;
+    }
+
+    .controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 4;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 20px;
+    }
+
+    button {
+      padding: 12px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 30px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+
+    #start {
+      background-color: #ffb3b3;
+      color: #5b0000;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+    }
+
+    #start:hover {
+      background-color: #ffdede;
+      transform: scale(1.05);
+    }
+
+    #retry {
+      background-color: #ffe9ec;
+      color: #881818;
+      border: 2px solid #ffb3b3;
+    }
+
+    #retry:hover {
+      background-color: #ffcccb;
+      transform: scale(1.05);
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    a:hover {
+      color: #ffdede;
+    }
+  </style>
+</head>
+
+<body>
+  <header><a href="{% url 'navtoresult' %}">Aneality Photobooth</a></header>
+
+  <div class="layout" id="main-content">
+    <div class="video-container">
+      <video id="video" autoplay></video>
+      <div id="countdown" class="countdown">3</div>
+    </div>
+
+    <div class="controls" id="controls">
+      <div class="button-group">
+        <button id="start"><i class="fas fa-camera"></i> Start</button>
+        <button id="retry"><i class="fas fa-redo"></i> Retry</button>
+        <canvas id="canvas" style="display: none;"></canvas>
+      </div>
+    </div>
+  </div>
+</body>
+
+<script>
+  const video = document.getElementById("video");
+  const canvas = document.getElementById("canvas");
+  const countdown = document.getElementById("countdown");
+  const startBtn = document.getElementById("start");
+  const retryBtn = document.getElementById("retry");
+
+  const capturedPhotos = [];
+  const photoCount = Number(new URLSearchParams(window.location.search).get("count")) || 3;
+
+  console.log(`📸 Target foto: ${photoCount}`);
+
+  async function initializeCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width: { ideal: 1280 },
+          height: { ideal: 960 },
+          facingMode: "user"
+        }
+      });
+
+      video.srcObject = stream;
+      console.log("📷 Kamera aktif");
+    } catch (error) {
+      console.error("Gagal mengakses kamera:", error);
+    }
+  }
+
+  function captureFrame() {
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    return canvas.toDataURL("image/jpeg", 0.85);
+  }
+
+  async function sendPhotos() {
+    try {
+      countdown.textContent = "Processing...";
+      countdown.style.display = "block";
+
+      const response = await fetch("{% url 'save_photos' %}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+          photos: capturedPhotos,
+          quality: 0.8
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("Request gagal.");
+      }
+
+      const result = await response.json();
+
+      if (result.status !== "ok") {
+        throw new Error(result.error || "Unknown error");
+      }
+
+      window.location.href = "{% url 'navtoresult' %}";
+    } catch (error) {
+      console.error(error);
+
+      countdown.textContent = "Error!";
+
+      setTimeout(() => {
+        countdown.style.display = "none";
+        startBtn.disabled = false;
+        retryBtn.disabled = false;
+      }, 2000);
+    }
+  }
+
+  function startCountdown(totalPhoto) {
+    let remainingPhoto = totalPhoto;
+    let second = 3;
+
+    countdown.style.display = "block";
+    countdown.textContent = second;
+
+    const timer = setInterval(() => {
+
+      second--;
+
+      if (second > 0) {
+        countdown.textContent = second;
+        return;
+      }
+
+      capturedPhotos.push(captureFrame());
+      remainingPhoto--;
+
+      console.log(`📸 Foto tersisa: ${remainingPhoto}`);
+
+      if (remainingPhoto === 0) {
+        clearInterval(timer);
+        countdown.style.display = "none";
+        sendPhotos();
+        return;
+      }
+
+      second = 3;
+      countdown.textContent = second;
+
+    }, 1000);
+  }
+
+  startBtn.addEventListener("click", async () => {
+    startBtn.disabled = true;
+    retryBtn.disabled = true;
+
+    await initializeCamera();
+    startCountdown(photoCount);
+  });
+</script>
+
+</html>

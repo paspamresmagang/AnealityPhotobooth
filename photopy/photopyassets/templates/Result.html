@@ -1,0 +1,666 @@
+{% csrf_token %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hasil Jepretan</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=JetBrains+Mono:wght@400;600&family=Work+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* ==========================================================
+       Tokens — Darkroom / Safelight
+       ========================================================== */
+    :root {
+      --bg-deep: #170a10;
+      --bg-plum: #2b1420;
+      --safelight: #ff9142;
+      --safelight-dim: #ff914233;
+      --paper: #f3e9d2;
+      --paper-dim: #e2d5b6;
+      --toner-rose: #c97b6b;
+      --ink: #241016;
+      --bg-red: rgb(179, 59, 59);
+      --text-color: white;
+
+      --font-body: 'Poppins', sans-serif;
+      --font-display: "Bebas Neue", sans-serif;
+      --font-body: "Work Sans", sans-serif;
+      --font-mono: "JetBrains Mono", monospace;
+
+      --radius-card: 14px;
+      --radius-pill: 999px;
+      --ease: cubic-bezier(.2, .8, .2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-red);
+      color: var(--text-color);
+
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        transition-duration: .001ms !important;
+      }
+    }
+
+    /* ==========================================================
+       Header
+       ========================================================== */
+    .header {
+      text-align: center;
+      max-width: 520px;
+      margin: 20px auto 90px;
+    }
+
+
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(40px, 8vw, 64px);
+      letter-spacing: .03em;
+      line-height: 1;
+      color: var(--paper);
+      text-shadow: 0 0 30px var(--safelight-dim);
+    }
+
+    /* ==========================================================
+       Photostrip — an actual filmstrip, sprocket holes and all
+       ========================================================== */
+    .futu {
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+      /* biar stack di layar sempit */
+    }
+
+    .booth-layout {
+      display: flex;
+      gap: 92px;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .booth-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .filmstrip {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .filmstrip-wrap {
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      gap: 0;
+      width: max-content;
+      max-width: 100%;
+      margin: 0 auto;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, .45);
+      overflow: hidden;
+    }
+
+    .sprockets {
+      width: 20px;
+      background-size: 20px 26px;
+      background-position: center;
+      flex-shrink: 0;
+    }
+
+    .photostrip {
+      background: white;
+      padding: 22px 20px;
+      display: grid;
+      margin: auto;
+      border-radius: 25px;
+      gap: 14px;
+    }
+
+    .photostrip img {
+      width: 220px;
+      display: block;
+      opacity: 0;
+      animation: develop .9s var(--ease) forwards;
+    }
+
+    .photostrip img:nth-of-type(1) {
+      animation-delay: .1s;
+    }
+
+    .photostrip img:nth-of-type(2) {
+      animation-delay: .4s;
+    }
+
+    .photostrip img:nth-of-type(3) {
+      animation-delay: .7s;
+    }
+
+    .photostrip img:nth-of-type(4) {
+      animation-delay: 1s;
+    }
+
+    .frame-layout.is-empty {
+      box-shadow: none;
+    }
+
+    @keyframes develop {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--paper-dim);
+      font-size: 15px;
+    }
+
+    /* ==========================================================
+       Frame picker — shown as a contact sheet of negatives
+       ========================================================== */
+    .carousel {
+      display: flex;
+      gap: 60px;
+      flex-wrap: wrap;
+    }
+
+    .frame-container {
+      position: relative;
+      align-items: flex-start;
+      width: 200px;
+      background: var(--ink);
+      cursor: pointer;
+      transition: border-color .25s var(--ease), box-shadow .25s var(--ease), transform .25s var(--ease);
+    }
+
+    .frame-container:hover,
+    .frame-container:focus-visible {
+      transform: translateY(-4px);
+      border-color: var(--safelight);
+      outline: none;
+    }
+
+    .frame-container .tag {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--safelight);
+      background: var(--bg-deep);
+      padding: 2px 6px;
+      border-radius: 4px;
+      z-index: 2;
+    }
+
+    .selectable-frame {
+      width: 100%;
+      border-radius: 6px;
+      display: block;
+      opacity: .92;
+    }
+
+    /* ==========================================================
+       Filter picker — framed as darkroom chemical baths
+       ========================================================== */
+    .filter-group {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .filter-btn {
+      flex: 1 1 150px;
+      max-width: 190px;
+      text-align: left;
+      padding: 14px 16px;
+      border: 1px solid var(--safelight-dim);
+      border-radius: 10px;
+      background: rgba(255, 145, 66, .06);
+      color: var(--paper);
+      cursor: pointer;
+      transition: background .25s var(--ease), transform .25s var(--ease), border-color .25s var(--ease);
+    }
+
+    .filter-btn:hover,
+    .filter-btn:focus-visible {
+      background: rgba(255, 145, 66, .16);
+      border-color: var(--safelight);
+      transform: translateY(-2px);
+      outline: none;
+    }
+
+    .filter-btn .title {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 20px;
+      letter-spacing: .02em;
+    }
+
+    .filter-btn .desc {
+      display: block;
+      margin-top: 2px;
+      font-size: 12px;
+      color: var(--paper-dim);
+    }
+
+    /* ==========================================================
+       Final print preview
+       ========================================================== */
+    .result-preview {
+      display: flex;
+      justify-content: center;
+      margin: 40px auto;
+
+    }
+
+    .frame-layout {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px var(--safelight-dim), 0 30px 60px rgba(0, 0, 0, .5);
+    }
+
+
+    .preview-placeholder {
+      text-align: center;
+      font-size: 14px;
+      padding: 40px 20px;
+      border: 4px dashed white;
+      border-radius: 14px;
+      width: 100%;
+    }
+
+    /* ==========================================================
+       Action buttons
+       ========================================================== */
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 26px;
+      border: none;
+      border-radius: var(--radius-pill);
+      font-family: var(--font-display);
+      font-size: 16px;
+      letter-spacing: .03em;
+      cursor: pointer;
+      transition: transform .2s var(--ease), box-shadow .2s var(--ease);
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-3px);
+      outline: none;
+    }
+
+    .btn-camera {
+      background: var(--safelight);
+      color: var(--bg-deep);
+      box-shadow: 0 10px 24px rgba(255, 145, 66, .35);
+    }
+
+    .btn-retake {
+      background: transparent;
+      color: var(--toner-rose);
+      border: 1px solid var(--toner-rose);
+    }
+
+    @media (max-width: 480px) {
+      .sprockets {
+        display: none;
+      }
+
+      .photostrip img {
+        width: 240px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <h1>Hasil Jepretanmu</h1>
+  </div>
+
+  <section>
+    <div class="booth-layout">
+
+      <div class="filmstrip">
+        {% if request.session.result_photos %}
+        <div class="filmstrip-wrap">
+          <div class="photostrip" id="photostrip">
+            {% for foto in request.session.result_photos %}
+            <img src="{{ foto }}" alt="Foto {{ forloop.counter }}" data-filename="foto_{{ forloop.counter }}.jpg">
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
+        <p class="empty-state">Belum ada foto, yuk balik foto-foto dulu!</p>
+        {% endif %}
+      </div>
+
+      <div class="booth-controls">
+        <div id="frame-carousel" class="carousel">
+          <div class="frame-container" tabindex="0" onclick="applyFrame('Grid_F4.png')">
+            <span class="tag">01</span>
+            <img src="{% static 'photos/photo4/Grid_F4.png' %}" alt="Frame Grid" class="selectable-frame">
+          </div>
+          <div class="frame-container" tabindex="0" onclick="applyFrame('KateJackson_F4.png')">
+            <span class="tag">02</span>
+            <img src="{% static 'photos/photo4/KateJackson_F4.png' %}" alt="Frame Vintage" class="selectable-frame">
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <button class="filter-btn" onclick="applyFilter('blackwhite')">
+            <span class="title">Developer</span>
+            <span class="desc">Hitam putih, kontras tegas</span>
+          </button>
+          <button class="filter-btn" onclick="applyFilter('sepia')">
+            <span class="title">Sepia Toner</span>
+            <span class="desc">Hangat dan klasik</span>
+          </button>
+          <button class="filter-btn" onclick="applyFilter('vintage')">
+            <span class="title">Vintage Grain</span>
+            <span class="desc">Butiran halus & vignette</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
+  <section>
+    <div id="result-preview" class="result-preview">
+      <div id="frame-layout" class="frame-layout is-empty">
+        <p class="preview-placeholder" id="preview-placeholder">Pilih bingkai di atas buat lihat hasil cetak di sini.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <div class="action-buttons">
+    <button class="btn btn-camera" onclick="downloadResult()">
+      <i class="fas fa-download"></i> Download Hasil
+    </button>
+    <a href="{% url 'retake_photos' %}">
+      <button class="btn btn-retake">
+        <i class="fas fa-redo"></i> Retake
+      </button>
+    </a>
+  </div>
+
+  <script>
+    // ==========================================================
+    // State: frame yang sedang dipilih
+    // ==========================================================
+    let selectedFrame = null;
+
+    const FRAME_DATA = {
+      "KateJackson_F4.png": {
+        src: "{% static 'photos/photo4/KateJackson_F4.png' %}",
+        size: { width: 560, height: 1708 },
+        slots: [
+          { x: 34, y: 38, width: 480, height: 330 },
+          { x: 37, y: 401, width: 483, height: 332 },
+          { x: 34, y: 769, width: 488, height: 329 },
+          { x: 34, y: 1129, width: 486, height: 329 }
+        ]
+      },
+      "Grid_F4.png": {
+        src: "{% static 'photos/photo4/Grid_F4.png' %}",
+        size: { width: 509, height: 1545 },
+        slots: [
+          { x: 69, y: 70, width: 358, height: 268 },
+          { x: 69, y: 397, width: 358, height: 261 },
+          { x: 67, y: 710, width: 370, height: 264 },
+          { x: 64, y: 1036, width: 370, height: 248 }
+        ]
+      }
+    };
+
+    /**
+     * Mengonversi <img> jadi base64 JPEG lewat canvas,
+     * dipakai sebelum kirim foto ke server untuk difilter.
+     */
+    function imageToBase64(img) {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.getContext("2d").drawImage(img, 0, 0);
+      return canvas.toDataURL("image/jpeg");
+    }
+
+    // Hasil filter (kalau ada) disimpan di sini, TERPISAH dari #photostrip.
+    // #photostrip asli nggak pernah diubah/ditimpa lagi.
+    let activeFilterImages = null; // array of { image, filename } atau null
+
+    /**
+     * Ambil src foto yang lagi aktif dipakai buat preview:
+     * hasil filter kalau ada, kalau nggak ya foto asli dari #photostrip.
+     */
+    function getActivePhotoSrcs() {
+      if (activeFilterImages) {
+        return activeFilterImages.map(item => item.image);
+      }
+      return Array.from(document.querySelectorAll("#photostrip img")).map(img => img.src);
+    }
+
+    /**
+     * Render ulang #frame-layout pakai frame yang lagi dipilih
+     * dan sumber foto yang lagi aktif (asli atau ter-filter).
+     */
+    function renderPreview() {
+      if (!selectedFrame) return;
+
+      const frame = FRAME_DATA[selectedFrame];
+      if (!frame) return;
+
+      const container = document.getElementById("frame-layout");
+      container.classList.remove("is-empty");
+      container.innerHTML = "";
+      container.style.width = `${frame.size.width}px`;
+      container.style.height = `${frame.size.height}px`;
+
+      const photoSrcs = getActivePhotoSrcs();
+      photoSrcs.forEach((src, index) => {
+        const slot = frame.slots[index];
+        if (!slot) return;
+
+        const photoEl = document.createElement("img");
+        photoEl.src = src;
+        Object.assign(photoEl.style, {
+          position: "absolute",
+          top: `${slot.y}px`,
+          left: `${slot.x}px`,
+          width: `${slot.width}px`,
+          height: `${slot.height}px`,
+          objectFit: "cover",
+          zIndex: 1
+        });
+        container.appendChild(photoEl);
+      });
+
+      const frameImg = document.createElement("img");
+      frameImg.src = frame.src;
+      Object.assign(frameImg.style, {
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 10,
+        pointerEvents: "none"
+      });
+      container.appendChild(frameImg);
+    }
+
+    /**
+     * Dipanggil pas user pilih bingkai di carousel.
+     */
+    function applyFrame(frameName) {
+      if (!FRAME_DATA[frameName]) return;
+      selectedFrame = frameName;
+      renderPreview();
+    }
+
+    /**
+     * Kirim foto ASLI dari #photostrip ke server buat difilter.
+     * Hasilnya cuma dipakai buat preview (#frame-layout) —
+     * #photostrip sendiri nggak disentuh sama sekali.
+     */
+    async function applyFilter(filterType) {
+      const photostrip = document.getElementById("photostrip");
+      if (!photostrip) return;
+
+      const images = Array.from(photostrip.querySelectorAll("img")).map(img => ({
+        image: imageToBase64(img),
+        filename: img.dataset.filename
+      }));
+
+      try {
+        const response = await fetch("{% url 'apply_mass_filter' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+          body: JSON.stringify({ filter: filterType, images })
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          alert(data.error);
+          return;
+        }
+
+        activeFilterImages = data.images; // simpen di state terpisah aja
+        renderPreview(); // update result-preview doang; #photostrip tetap original
+      } catch (err) {
+        console.error(err);
+        alert("Terjadi kesalahan.");
+      }
+    }
+    /**
+     * Load satu gambar jadi Image object (buat digambar di canvas).
+     */
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+      });
+    }
+
+    /**
+     * Gambar image ke canvas dengan crop ala CSS object-fit: cover,
+     * biar hasilnya sama persis kayak yang keliatan di preview HTML.
+     */
+    function drawImageCover(ctx, img, x, y, width, height) {
+      const imgRatio = img.width / img.height;
+      const boxRatio = width / height;
+      let sx, sy, sw, sh;
+
+      if (imgRatio > boxRatio) {
+        sh = img.height;
+        sw = sh * boxRatio;
+        sx = (img.width - sw) / 2;
+        sy = 0;
+      } else {
+        sw = img.width;
+        sh = sw / boxRatio;
+        sx = 0;
+        sy = (img.height - sh) / 2;
+      }
+
+      ctx.drawImage(img, sx, sy, sw, sh, x, y, width, height);
+    }
+
+    /**
+     * Render ulang komposit (foto + bingkai) ke <canvas>,
+     * lalu trigger download-nya sebagai file PNG.
+     */
+    async function downloadResult() {
+      if (!selectedFrame) {
+        alert("Pilih bingkai dulu sebelum download.");
+        return;
+      }
+
+      const frame = FRAME_DATA[selectedFrame];
+      const canvas = document.createElement("canvas");
+      canvas.width = frame.size.width;
+      canvas.height = frame.size.height;
+      const ctx = canvas.getContext("2d");
+
+      try {
+        const photoSrcs = getActivePhotoSrcs();
+
+        for (let i = 0; i < photoSrcs.length; i++) {
+          const slot = frame.slots[i];
+          if (!slot) continue;
+          const img = await loadImage(photoSrcs[i]);
+          drawImageCover(ctx, img, slot.x, slot.y, slot.width, slot.height);
+        }
+
+        const frameImg = await loadImage(frame.src);
+        ctx.drawImage(frameImg, 0, 0, frame.size.width, frame.size.height);
+
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "hasil-jepretan.png";
+          link.click();
+          URL.revokeObjectURL(url);
+        }, "image/png");
+      } catch (err) {
+        console.error(err);
+        alert("Gagal bikin file buat didownload.");
+      }
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,415 @@
+{% csrf_token %}
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Hasil Jepretan</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Poppins, sans-serif;
+      background:
+        radial-gradient(circle at top, #ffd7e3, #f6b3b3 40%, #d86c6c 100%);
+      min-height: 100vh;
+      color: #333;
+      padding: 40px 20px;
+    }
+
+    .header {
+      text-align: center;
+      max-width: 520px;
+      margin: 0 auto 48px;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      letter-spacing: .16em;
+      color: var(--safelight);
+      border: 1px solid var(--safelight-dim);
+      border-radius: var(--radius-pill);
+      padding: 5px 14px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      color: white;
+      font-size: 42px;
+      margin-bottom: 35px;
+      text-shadow: 0 4px 10px rgba(0, 0, 0, .15);
+    }
+
+    .subhead {
+      margin-top: 12px;
+      color: var(--paper-dim);
+      font-size: 15px;
+    }
+      
+    .photostrip {
+      background: white;
+      padding: 15px;
+      border-radius: 25px;
+      display: grid;
+      gap: 12px;
+      width: max-content;
+      margin: auto;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, .18);
+    }
+
+    .photostrip img {
+      width: 220px;
+    }
+
+    .carousel {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin: 40px 0;
+    }
+
+    .frame-container {
+      width: 180px;
+      background: white;
+      padding: 10px;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: .25s;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, .1);
+    }
+
+    .frame-container:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 35px rgba(0, 0, 0, .18);
+    }
+
+    .selectable-frame {
+      width: 100%;
+      border-radius: 12px;
+    }
+
+    .filter-group {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin: 40px 0;
+    }
+
+    .filter-btn {
+      padding: 13px 28px;
+      border: none;
+      border-radius: 999px;
+      background: white;
+      color: #444;
+      font-weight: 600;
+      cursor: pointer;
+      transition: .25s;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, .1);
+    }
+
+    .filter-btn:hover {
+      background: #ff7b94;
+      color: white;
+      transform: translateY(-3px);
+    }
+
+    .result-preview {
+      display: flex;
+      justify-content: center;
+      margin: 40px auto;
+    }
+
+    .frame-layout {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, .25);
+    }
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 40px;
+    }
+
+    .back-btn {
+      padding: 15px 28px;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 15px;
+      color: white;
+      font-weight: 600;
+      transition: .25s;
+    }
+
+    .camera {
+      background: #00b894;
+    }
+
+    .camera:hover {
+      background: #00a383;
+      transform: translateY(-3px);
+    }
+
+    .retake {
+      background: #ff7675;
+    }
+
+    .retake:hover {
+      background: #e65d5b;
+      transform: translateY(-3px);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <span class="eyebrow">GULUNGAN #04 — RUANG CUCI FOTO</span>
+    <h1>Hasil Jepretanmu</h1>
+    <p class="subhead">Difoto, dicuci, dan siap dibawa pulang.</p>
+  </div>
+
+  {% if request.session.result_photos %}
+  <div class="photostrip" id="photostrip">
+    {% for foto in request.session.result_photos %}
+    <img src="{{ foto }}" alt="Foto {{ forloop.counter }}" data-filename="foto_{{ forloop.counter }}.jpg">
+    {% endfor %}
+  </div>
+  {% else %}
+  <p>Belum ada foto, yuk balik foto-foto dulu!</p>
+  {% endif %}
+
+  <div id="frame-carousel" class="carousel">
+    <div class="frame-container" onclick="applyFrame('Grid_F4.png')">
+      <img src="{% static 'photos/photo4/Grid_F4.png' %}" alt="Frame Grid" class="selectable-frame">
+    </div>
+    <div class="frame-container" onclick="applyFrame('KateJackson_F4.png')">
+      <img src="{% static 'photos/photo4/KateJackson_F4.png' %}" alt="Frame Vintage" class="selectable-frame">
+    </div>
+  </div>
+
+  <div class="filter-group">
+    <button class="filter-btn" onclick="applyFilter('blackwhite')">
+      ⚫ Black & White
+    </button>
+
+    <button class="filter-btn" onclick="applyFilter('sepia')">
+      🤎 Sepia
+    </button>
+
+    <button class="filter-btn" onclick="applyFilter('vintage')">
+      📸 Vintage
+    </button>
+  </div>
+  <div class="action-buttons">
+
+    <a href="{% url 'navtocamera' %}">
+      <button class="back-btn camera">
+        <i class="fas fa-camera"></i>
+        Foto Lagi
+      </button>
+    </a>
+
+    <a href="{% url 'retake_photos' %}">
+      <button class="back-btn retake">
+        <i class="fas fa-redo"></i>
+        Retake
+      </button>
+    </a>
+
+  </div>
+
+  <div id="result-preview" class="result-preview">
+    <div id="frame-layout" class="frame-layout">
+    </div>
+  </div>
+
+  <a href="{% url 'navtocamera' %}">
+    <button class="back-btn"><i class="fas fa-arrow-left"></i> Balik Foto Lagi</button>
+  </a>
+  <a href="{% url 'retake_photos' %}">
+    <button class="back-btn"><i class="fas fa-redo"></i> Retake Foto</button>
+  </a>
+
+  <script>
+    function getBase64(img) {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+
+      return canvas.toDataURL("image/jpeg");
+    }
+
+    // nyimpen frame yang lagi dipilih
+    let selectedFrame = null;
+
+    const FRAME_DATA = {
+      "KateJackson_F4.png": {
+        src: "{% static 'photos/photo4/KateJackson_F4.png' %}",
+        size: {
+          width: 560,
+          height: 1708
+        },
+        slots: [
+          { x: 34, y: 38, width: 480, height: 330 },
+          { x: 37, y: 401, width: 483, height: 332 },
+          { x: 34, y: 769, width: 488, height: 329 },
+          { x: 34, y: 1129, width: 486, height: 329 }
+        ]
+      },
+
+      "Grid_F4.png": {
+        src: "{% static 'photos/photo4/Grid_F4.png' %}",
+        size: {
+          width: 260,
+          height: 760
+        },
+        slots: [
+          { x: 69, y: 70, width: 358, height: 268 },
+          { x: 69, y: 397, width: 358, height: 261 },
+          { x: 67, y: 710, width: 370, height: 264 },
+          { x: 64, y: 1036, width: 370, height: 248 }
+        ]
+      }
+    };
+
+    function applyFrame(frameName) {
+
+      selectedFrame = frameName;
+
+      const frame = FRAME_DATA[frameName];
+      if (!frame) return;
+
+      const container = document.getElementById("frame-layout");
+
+      container.innerHTML = "";
+      container.style.width = frame.size.width + "px";
+      container.style.height = frame.size.height + "px";
+
+      const frameImg = document.createElement("img");
+      frameImg.src = frame.src;
+
+      Object.assign(frameImg.style, {
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 10,
+        pointerEvents: "none"
+      });
+
+      const photos = document.querySelectorAll("#photostrip img");
+
+      photos.forEach((img, i) => {
+
+        if (!frame.slots[i]) return;
+
+        const slot = frame.slots[i];
+
+        const photo = document.createElement("img");
+
+        photo.src = img.src;
+
+        Object.assign(photo.style, {
+          position: "absolute",
+          top: slot.top + "px",
+          left: slot.left + "px",
+          width: slot.width + "px",
+          height: slot.height + "px",
+          objectFit: "cover",
+          zIndex: 1
+        });
+
+        container.appendChild(photo);
+
+      });
+
+      container.appendChild(frameImg);
+    }
+
+    async function applyFilter(filterType) {
+
+      const photostrip = document.getElementById("photostrip");
+      const imgElements = photostrip.querySelectorAll("img");
+
+      const images = [];
+
+      imgElements.forEach(img => {
+
+        images.push({
+          image: getBase64(img),
+          filename: img.dataset.filename
+        });
+
+      });
+
+      try {
+
+        const response = await fetch("{% url 'apply_mass_filter' %}", {
+
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+          },
+
+          body: JSON.stringify({
+            filter: filterType,
+            images: images
+          })
+
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          alert(data.error);
+          return;
+        }
+
+        photostrip.innerHTML = "";
+
+        data.images.forEach(item => {
+
+          const img = document.createElement("img");
+
+          img.src = item.image;
+          img.dataset.filename = item.filename;
+
+          photostrip.appendChild(img);
+
+        });
+
+        // otomatis refresh preview
+        if (selectedFrame) {
+          applyFrame(selectedFrame);
+        }
+
+      }
+      catch (err) {
+
+        console.error(err);
+        alert("Terjadi kesalahan.");
+
+      }
+    }</script>
+</body>
+
+</html>
